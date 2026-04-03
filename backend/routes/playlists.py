@@ -9,7 +9,12 @@ routes for user playlists, including: CRUD
 
 
 
-import fastapi
+from fastapi import fastapi, APIRouter, status
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 router = fastapi.APIRouter(prefix="/playlists", tags=["Playlists"])
 
 

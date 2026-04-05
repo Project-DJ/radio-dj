@@ -1,1 +1,1 @@
-#:)
+# Database initialization for the radio-dj application

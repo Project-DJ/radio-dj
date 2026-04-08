@@ -1,18 +1,31 @@
-# React + Vite
+# radio-dj
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## React Compiler
+## Setting up Radio-DJ GitHub repository to local machine
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+# Step1 Cloning repo
+In IDE terminal type ->         git clone https://github.com/Project-DJ/radio-dj.git
 
-Note: This will impact Vite dev & build performances.
+# Step 2 Virtual Environment
+Enter root directory ->         cd radio-dj
 
-## Expanding the ESLint configuration
+Create virtual environment ->   python -m venv .venv
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Create venv(MacOS) ->           python3 -m venv .venv
+
+Enter venv (MacOS) ->           source .venv/bin/activate
+
+Enter venv (Windows CMD) ->     .venv\Scripts\activate
+
+Enter venv (Windows PS) ->      .venv\Scripts\Activate.ps1
+
+# Step 3 Requirements
+
+Download requirements in venv -> pip install -r requirements.txt
+
+
+# Step 4 Verify
+
+Show list of installation ->    pip list

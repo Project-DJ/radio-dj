@@ -1,5 +1,5 @@
-import { FilterDropdown } from "@/components/FilterDropdown.js";
-import { albums } from "@/data/music.js";
+import { FilterDropdown } from "@/components/FilterDropdown";
+import { albums } from "@/data/music";
 
 interface Props {
   genres: string[];

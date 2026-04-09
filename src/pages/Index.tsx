@@ -1,7 +1,9 @@
 import { useState, useMemo, useCallback } from "react";
 import { albums } from "@/data/music";
 import { MusicLibrarySidebar } from "@/components/Sidebar";
-import { AlbumCard } from "@/components/MusicCard";
+import { AlbumCard } from "@/components/AlbumCard";
+import { Link } from "react-router-dom";
+
 
 const toggle = (arr: string[], val: string) =>
   arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
@@ -45,7 +47,7 @@ const Index = () => {
             ★ Music Library ★
           </h1>
           <p className="text-sm text-muted-foreground font-body mt-1">
-            Your Y2K collection — curated with love & angst
+            3-2-1 Radio!!!
           </p>
         </div>
 

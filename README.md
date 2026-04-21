@@ -29,3 +29,38 @@ Download requirements in venv -> pip install -r requirements.txt
 # Step 4 Verify
 
 Show list of installation ->    pip list
+
+
+--------------------------------------------------------------------
+
+## Setting up Frontend for Radio-DJ
+
+# Step 1
+
+In root directory activate virtual environment
+
+# Step 2
+
+Change to frontend directory from terminal -> cd frontend
+
+# Step 3
+
+While in Virtual Environment install npm and dependancies:
+
+-> pip install npm
+
+-> npm install 
+
+Run the program : npm run dev
+
+--------------------------------------------------------------------
+
+## Setting up Backend for Radio-DJ
+
+# Step 1 
+
+# Step 2
+
+# Step 3 
+
+# Step 4

@@ -1,0 +1,1 @@
+"""Playlist schema for the API"""

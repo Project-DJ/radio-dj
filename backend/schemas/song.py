@@ -1,0 +1,1 @@
+"""Song schema for the API"""

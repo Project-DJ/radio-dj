@@ -1,0 +1,1 @@
+"""User schema for the API"""

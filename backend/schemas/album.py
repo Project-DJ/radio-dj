@@ -1,0 +1,1 @@
+"""Album schema for the API"""

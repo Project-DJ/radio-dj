@@ -7,3 +7,10 @@ from datetime import datetime
 
 class Album(Base):
     __tablename__ = "albums"
+
+    id = Column(Integer, primary_key=True, index=True, nullable=False)
+    title = Column(String, index=True, nullable=False)
+    artist = Column(String, index=True, nullable=False)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

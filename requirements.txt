@@ -8,3 +8,6 @@ python-dotenv
 pytest
 requests
 python-dotenv
+librosa
+deeprhythm
+numpy

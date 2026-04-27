@@ -3,10 +3,7 @@ from ..db.database import get_db        #allow us to access the database session
 from ..schemas.playlist import PlaylistBase     #allow us to access user schema for request validation
 from .. import models                   #allow us to access database user model
 from sqlalchemy.orm import Session      #allow us to perform database operations using SQLAlchemy ORM
-from dotenv import load_dotenv          #allow us to load environment variables from a .env file
-import os                               #allow us to access environment variables
 
-load_dotenv()
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
 

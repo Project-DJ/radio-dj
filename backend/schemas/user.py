@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, ConfigDict, Field
 
-class User(BaseModel):
+class UserBase(BaseModel):
     """User schema for the API"""
     model_config = ConfigDict(from_attributes=True)
 

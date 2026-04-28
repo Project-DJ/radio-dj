@@ -7,7 +7,7 @@ allowing user to only enter title, artist, and album.
 import os
 import requests
 import base64
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException, Depends
 from dotenv import load_dotenv
 from pathlib import Path
 from ..schemas.song import SongBase
@@ -28,7 +28,7 @@ router = APIRouter(prefix="/songs", tags=["Songs"])
 
 # Create a song (POST /songs/)
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_song(song: SongBase, db: Session = get_db()):
+async def create_song(song: SongBase, db: Session = Depends(get_db)):
     new_song = models.Song(**dict(song))
     db.add(new_song)
     db.commit()
@@ -38,7 +38,7 @@ async def create_song(song: SongBase, db: Session = get_db()):
 
 # Get a song by ID (GET /songs/{song_id})
 @router.get("/{song_id}")
-async def get_song(song_id: int, db: Session = get_db()):
+async def get_song(song_id: int, db: Session = Depends(get_db)):
     song = db.query(models.Song).filter(models.Song.id == song_id).first()
     if not song:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
@@ -47,7 +47,7 @@ async def get_song(song_id: int, db: Session = get_db()):
 
 # Update a song by ID (PUT /songs/{song_id})
 @router.put("/{song_id}")
-async def update_song(song_id: int, song: SongBase, db: Session = get_db()):
+async def update_song(song_id: int, song: SongBase, db: Session = Depends(get_db)):
     db_song = db.query(models.Song).filter(models.Song.id == song_id).first()
     if not db_song:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
@@ -60,7 +60,7 @@ async def update_song(song_id: int, song: SongBase, db: Session = get_db()):
 
 # Delete a song by ID (DELETE /songs/{song_id})
 @router.delete("/{song_id}")
-async def delete_song(song_id: int, db: Session = get_db()):
+async def delete_song(song_id: int, db: Session = Depends(get_db)):
     song = db.query(models.Song).filter(models.Song.id == song_id).first()
     if not song:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")

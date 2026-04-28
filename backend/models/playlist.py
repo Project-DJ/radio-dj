@@ -14,3 +14,4 @@ class Playlist(Base):
     songs = relationship("Song", secondary="playlist_songs", back_populates="playlists")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    users = relationship("User", secondary="playlist_users", back_populates="playlists")

@@ -41,7 +41,7 @@ async def remove_music_from_playlist(playlist_id: int, song_id: int, db: Session
     song_to_remove = db.query(models.Song).filter(models.Song.id == song_id).first()
     if not song_to_remove:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
-    db.execute(models.playlist_songs.delete().where(models.playlist_songs.c.playlist_id == playlist_id and models.playlist_songs.c.song_id == song_id))
+    db.execute(models.playlist_songs.delete()(models.playlist_songs.c.playlist_id == playlist_id) & (models.playlist_songs.c.song_id == song_id))
     db.commit()
     return {"message": f"Song {song_to_remove.title} removed from playlist {playlist_id}"}
 

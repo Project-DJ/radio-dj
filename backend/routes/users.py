@@ -45,7 +45,8 @@ async def update_user(user: UserBase, user_id: int, db: Session = Depends(get_db
     if not user_to_update:
         raise HTTPException(status_code=404, detail="User not found")
     
-    user_to_update.update(**dict(user))
+    for key, value in dict(user).items():
+        setattr(user_to_update, key, value)
     db.commit()
     db.refresh(user_to_update)
 

@@ -10,7 +10,31 @@ router = APIRouter(prefix="/albums", tags=["Albums"])
 
 
 def album_to_dict(a):
-    return {"id": a.id, "title": a.title, "artist": a.artist}
+    return {
+        "id": a.id,
+        "title": a.title,
+        "artist": a.artist,
+        "genre": a.genre,
+        "year": a.year,
+        "cover": a.cover,
+    }
+
+def song_to_dict(s):
+    return {
+        "id": s.id,
+        "title": s.title,
+        "artist": s.artist,
+        "album": s.album,
+        "duration_ms": s.duration_ms,
+        "bpm": s.bpm,
+        "owner_id": s.owner_id,
+    }
+
+
+@router.get("/")
+async def get_albums(db: Session = Depends(get_db)):
+    albums = db.query(models.Album).all()
+    return [album_to_dict(a) for a in albums]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -20,6 +44,15 @@ async def create_album(album: Album, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_album)
     return {"message": "Album created successfully", "album_id": new_album.id}
+
+
+@router.get("/{album_id}/songs")
+async def get_album_songs(album_id: int, db: Session = Depends(get_db)):
+    album = db.query(models.Album).filter(models.Album.id == album_id).first()
+    if not album:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Album with id {album_id} not found")
+    songs = db.query(models.Song).filter(models.Song.album == album.title).all()
+    return [song_to_dict(s) for s in songs]
 
 
 @router.get("/{album_id}")

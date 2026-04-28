@@ -11,6 +11,9 @@ class Album(Base):
     id = Column(Integer, primary_key=True, index=True, nullable=False)
     title = Column(String, index=True, nullable=False)
     artist = Column(String, index=True, nullable=False)
-    
+    genre = Column(String, nullable=True)
+    year = Column(Integer, nullable=True)
+    cover = Column(String, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

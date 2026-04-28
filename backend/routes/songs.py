@@ -36,6 +36,12 @@ def song_to_dict(s):
     }
 
 
+@router.get("/")
+async def get_songs(db: Session = Depends(get_db)):
+    songs = db.query(models.Song).all()
+    return [song_to_dict(s) for s in songs]
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_song(song: SongBase, db: Session = Depends(get_db)):
     new_song = models.Song(**song.model_dump(exclude_none=True))

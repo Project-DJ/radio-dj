@@ -1,7 +1,8 @@
 import { FilterDropdown } from "@/components/FilterDropdown";
-import { albums } from "@/data/music";
+import type { ApiAlbum } from "@/lib/api";
 
 interface Props {
+  allAlbums: ApiAlbum[];
   genres: string[];
   artists: string[];
   years: string[];
@@ -12,15 +13,17 @@ interface Props {
   totalFiltered: number;
 }
 
-const unique = (key: "genre" | "artist" | "year") =>
-  [...new Set(albums.map((a) => String(a[key])))].sort();
-
 export function MusicLibrarySidebar({
+  allAlbums,
   genres, artists, years,
   onToggleGenre, onToggleArtist, onToggleYear,
   onClearAll, totalFiltered,
 }: Props) {
   const hasFilters = genres.length + artists.length + years.length > 0;
+
+  const uniqueGenres = [...new Set(allAlbums.map((a) => a.genre).filter(Boolean) as string[])].sort();
+  const uniqueArtists = [...new Set(allAlbums.map((a) => a.artist))].sort();
+  const uniqueYears = [...new Set(allAlbums.map((a) => String(a.year)).filter((y) => y !== "null" && y !== "undefined"))].sort();
 
   return (
     <aside className="w-64 shrink-0 border-r-[3px] border-foreground bg-card min-h-screen p-4">
@@ -35,19 +38,19 @@ export function MusicLibrarySidebar({
 
       <FilterDropdown
         label="Genre"
-        options={unique("genre")}
+        options={uniqueGenres}
         selected={genres}
         onToggle={onToggleGenre}
       />
       <FilterDropdown
         label="Artist"
-        options={unique("artist")}
+        options={uniqueArtists}
         selected={artists}
         onToggle={onToggleArtist}
       />
       <FilterDropdown
         label="Year"
-        options={unique("year")}
+        options={uniqueYears}
         selected={years}
         onToggle={onToggleYear}
       />

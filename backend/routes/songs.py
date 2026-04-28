@@ -9,10 +9,17 @@ import requests
 import base64
 from fastapi import APIRouter, Depends, status, HTTPException
 from dotenv import load_dotenv
+from pydantic import BaseModel
 from ..schemas.song import SongBase
 from .. import models
 from ..db.database import get_db
 from sqlalchemy.orm import Session
+
+
+class SongSearchInput(BaseModel):
+    title: str
+    artist: str
+    album: str
 
 
 load_dotenv()
@@ -49,6 +56,36 @@ async def create_song(song: SongBase, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_song)
     return {"message": "Song created successfully", "song_id": new_song.id}
+
+
+@router.post("/search_and_add", status_code=status.HTTP_201_CREATED)
+async def search_and_add(body: SongSearchInput, db: Session = Depends(get_db)):
+    metadata = get_song_metadata(body.title, body.artist, body.album)
+    if not metadata:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Song not found on Spotify")
+
+    artist_str = ", ".join(metadata["artist_names"])
+    genre_str = ", ".join(metadata["artist_genres"][:3]) if metadata["artist_genres"] else None
+
+    existing = db.query(models.Song).filter(
+        models.Song.title == metadata["track_name"],
+        models.Song.artist == artist_str,
+    ).first()
+    if existing:
+        return {"song": song_to_dict(existing), "spotify": metadata, "created": False}
+
+    new_song = models.Song(
+        title=metadata["track_name"],
+        artist=artist_str,
+        album=metadata["album_name"],
+        duration_ms=metadata["duration_ms"],
+        artist_genre=genre_str,
+        release_date=metadata.get("release_date"),
+    )
+    db.add(new_song)
+    db.commit()
+    db.refresh(new_song)
+    return {"song": song_to_dict(new_song), "spotify": metadata, "created": True}
 
 
 @router.get("/{song_id}")

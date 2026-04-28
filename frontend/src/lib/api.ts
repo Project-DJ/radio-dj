@@ -19,6 +19,27 @@ export interface ApiSong {
   owner_id: number;
 }
 
+export interface ApiSpotifyMetadata {
+  track_name: string;
+  track_id: string;
+  spotify_url: string;
+  album_name: string;
+  release_date: string | null;
+  artist_names: string[];
+  artist_genres: string[];
+  duration_ms: number;
+  explicit: boolean;
+  popularity: number;
+  isrc: string | null;
+  album_images: { url: string; width: number; height: number }[];
+}
+
+export interface ApiSearchResult {
+  song: ApiSong;
+  spotify: ApiSpotifyMetadata;
+  created: boolean;
+}
+
 export interface ApiPlaylist {
   id: number;
   name: string;
@@ -45,6 +66,12 @@ export const api = {
     get: (id: number) => request<ApiSong>(`/songs/${id}`),
     create: (data: Omit<ApiSong, "id">) =>
       request("/songs/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
+    searchAndAdd: (data: { title: string; artist: string; album: string }) =>
+      request<ApiSearchResult>("/songs/search_and_add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
   },
   playlists: {
     list: () => request<ApiPlaylist[]>("/playlists/"),

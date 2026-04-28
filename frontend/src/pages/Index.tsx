@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 import { MusicLibrarySidebar } from "@/components/Sidebar";
 import { AlbumCard } from "@/components/AlbumCard";
@@ -47,13 +48,21 @@ const Index = () => {
       />
 
       <main className="flex-1 p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-display uppercase tracking-wider">
-            ★ Music Library ★
-          </h1>
-          <p className="text-sm text-muted-foreground font-body mt-1">
-            3-2-1 Radio!!!
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-display uppercase tracking-wider">
+              ★ Music Library ★
+            </h1>
+            <p className="text-sm text-muted-foreground font-body mt-1">
+              3-2-1 Radio!!!
+            </p>
+          </div>
+          <Link
+            to="/search"
+            className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-foreground text-primary-foreground hover:bg-primary transition-colors"
+          >
+            + Add Song
+          </Link>
         </div>
 
         {isLoading && (

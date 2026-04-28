@@ -57,10 +57,4 @@ Run the program : npm run dev
 
 ## Setting up Backend for Radio-DJ
 
-# Step 1 
-
-# Step 2
-
-# Step 3 
-
-# Step 4
+from cd radio-dj run -> uvicorn backend.main:app --reload

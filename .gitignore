@@ -1,3 +1,4 @@
 .env
 .venv
 node_modules/
+radio_dj.db

@@ -34,3 +34,22 @@ Models to create database tables for:
         
 
 """
+
+
+from sqlalchemy import Table, Column, Integer, ForeignKey
+from ..db.database import Base
+
+playlist_songs = Table("playlist_songs", Base.metadata,
+    Column("playlist_id", Integer, ForeignKey("playlists.id"), primary_key=True),
+    Column("song_id", Integer, ForeignKey("songs.id"), primary_key=True),
+)
+
+playlist_users = Table("playlist_users", Base.metadata,
+    Column("playlist_id", Integer, ForeignKey("playlists.id"), primary_key=True),
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+)
+
+from .album import Album
+from .song import Song
+from .user import User
+from .playlist import Playlist

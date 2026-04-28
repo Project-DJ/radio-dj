@@ -68,6 +68,13 @@ async def delete_song(song_id: int, db: Session = get_db()):
     db.commit()
     return {"message": f"Delete song {song_id}"}
 
+# Enrich song metadata by providing title, artist, and album (POST /songs/{song_id}/enrich_metadata)
+@router.post("/{song_id}/enrich_metadata")
+async def get_song_metadata_endpoint(song_id: int, song: SongBase):
+    metadata = get_song_metadata(song.title, song.artist, song.album)
+    if not metadata:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Song metadata not found on Spotify")
+    return metadata
 
 # Spotify API integration to get song metadata based on title, artist, and album
 def get_access_token():

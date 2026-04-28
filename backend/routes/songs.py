@@ -4,13 +4,16 @@ metadata, storing it within our own database
 allowing user to only enter title, artist, and album.
 """
 
-
-from fastapi import FastAPI, APIRouter, status
-from dotenv import load_dotenv
 import os
 import requests
 import base64
+from fastapi import APIRouter, status, HTTPException
+from dotenv import load_dotenv
 from pathlib import Path
+from ..schemas.song import SongBase
+from .. import models
+from ..db.database import get_db
+from sqlalchemy.orm import Session
 
 
 load_dotenv()
@@ -22,23 +25,51 @@ router = APIRouter(prefix="/songs", tags=["Songs"])
 
 """CRUD endpoints for songs, including:"""
 
-@router.post("/")
-async def create_song():
+
+# Create a song (POST /songs/)
+@router.post("/", status_code=status.HTTP_201_CREATED)
+async def create_song(song: SongBase, db: Session = get_db()):
+    new_song = models.Song(**dict(song))
+    db.add(new_song)
+    db.commit()
+    db.refresh(new_song)
     return {"message": "Create a song"}
 
-@router.get("/{song_id}")
-async def get_song(song_id: int):
-    return {"message": f"Get song {song_id}"}
 
+# Get a song by ID (GET /songs/{song_id})
+@router.get("/{song_id}")
+async def get_song(song_id: int, db: Session = get_db()):
+    song = db.query(models.Song).filter(models.Song.id == song_id).first()
+    if not song:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
+    return song
+
+
+# Update a song by ID (PUT /songs/{song_id})
 @router.put("/{song_id}")
-async def update_song(song_id: int):
+async def update_song(song_id: int, song: SongBase, db: Session = get_db()):
+    db_song = db.query(models.Song).filter(models.Song.id == song_id).first()
+    if not db_song:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
+    for key, value in dict(song).items():
+        setattr(db_song, key, value)
+    db.commit()
+    db.refresh(db_song)
     return {"message": f"Update song {song_id}"}
 
+
+# Delete a song by ID (DELETE /songs/{song_id})
 @router.delete("/{song_id}")
-async def delete_song(song_id: int):
+async def delete_song(song_id: int, db: Session = get_db()):
+    song = db.query(models.Song).filter(models.Song.id == song_id).first()
+    if not song:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
+    db.delete(song)
+    db.commit()
     return {"message": f"Delete song {song_id}"}
 
 
+# Spotify API integration to get song metadata based on title, artist, and album
 def get_access_token():
     auth_string = f"{CLIENT_ID}:{CLIENT_SECRET}"
     auth_b64 = base64.b64encode(auth_string.encode()).decode()
@@ -54,6 +85,8 @@ def get_access_token():
     r.raise_for_status()
     return r.json()["access_token"]
 
+
+# Search for a song on Spotify and return metadata based on title, artist, and album
 def search_song(song_name, artist, album):
     token = get_access_token()
 
@@ -70,6 +103,8 @@ def search_song(song_name, artist, album):
     r.raise_for_status()
     return r.json()
 
+
+# Get artist information from Spotify API
 def get_artist(artist_id, token):
     url = f"https://api.spotify.com/v1/artists/{artist_id}"
     headers = {"Authorization": f"Bearer {token}"}
@@ -78,6 +113,8 @@ def get_artist(artist_id, token):
     r.raise_for_status()
     return r.json()
 
+
+# Main function to get song metadata based on title, artist, and album
 def get_song_metadata(song_name, artist, album):
     token = get_access_token()
 
@@ -114,6 +151,8 @@ def get_song_metadata(song_name, artist, album):
         "album_images": track["album"].get("images", []),
     }
 
+
+# Example usage
 if __name__ == "__main__":
     metadata = get_song_metadata("Blinding Lights", "The Weeknd", "After Hours")
     print(metadata)

@@ -45,6 +45,8 @@ async def remove_music_from_playlist(playlist_id: int, song_id: int, db: Session
     db.commit()
     return {"message": f"Song {song_to_remove.title} removed from playlist {playlist_id}"}
 
+
+# Get a playlist by its ID, and return the playlist details along with the list of songs in the playlist. If the playlist does not exist, return a 404 error.
 @router.get("/{playlist_id}")
 async def get_playlist(playlist_id: int, db: Session = Depends(get_db)):
     playlist = db.query(models.Playlist).filter(models.Playlist.id == playlist_id).first()

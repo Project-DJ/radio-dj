@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, ConfigDict, Field
 
-class Song(BaseModel):
+class SongBase(BaseModel):
     """Song schema for the API"""
     model_config = ConfigDict(from_attributes=True)
 

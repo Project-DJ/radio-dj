@@ -1,5 +1,5 @@
 from ..db.database import Base
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, Float, String, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -16,6 +16,7 @@ class Song(Base):
     duration_ms = Column(Integer, nullable=False)
 
     #optional fields
+    bpm = Column(Float, nullable=True)
     artist_genre = Column(String, index=True)
     release_date = Column(String, index=True)
 

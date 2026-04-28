@@ -1,4 +1,6 @@
 import fastapi
+import backend.models
+from fastapi.middleware.cors import CORSMiddleware
 from backend.routes import albums, songs, users, playlists
 from backend.db.database import Base, engine
 
@@ -6,6 +8,12 @@ from backend.db.database import Base, engine
 Base.metadata.create_all(bind=engine)
 
 app = fastapi.FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(users.router)
 app.include_router(playlists.router)
 app.include_router(albums.router)

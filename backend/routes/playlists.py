@@ -1,60 +1,92 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from ..db.database import get_db        #allow us to access the database session for CRUD operations
-from ..schemas.playlist import PlaylistBase     #allow us to access user schema for request validation
-from .. import models                   #allow us to access database user model
-from sqlalchemy.orm import Session      #allow us to perform database operations using SQLAlchemy ORM
+from ..db.database import get_db
+from ..schemas.playlist import PlaylistBase
+from .. import models
+from sqlalchemy.orm import Session
 
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
 
 
+def playlist_to_dict(p):
+    return {
+        "id": p.id,
+        "name": p.name,
+        "description": p.description,
+        "target_bpm": p.target_bpm,
+    }
 
-"""CRUD endpoints for playlists, including:"""
+def song_to_dict(s):
+    return {
+        "id": s.id,
+        "title": s.title,
+        "artist": s.artist,
+        "album": s.album,
+        "duration_ms": s.duration_ms,
+        "bpm": s.bpm,
+        "owner_id": s.owner_id,
+    }
 
 
-# Create a new playlist by providing a name, description, and user ID. Return a message confirming the creation of the playlist along with its ID.
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_playlist(playlist: PlaylistBase, db: Session = Depends(get_db)):
-    new_playlist = models.Playlist(**dict(playlist))
+    new_playlist = models.Playlist(**playlist.model_dump(exclude_none=True))
     db.add(new_playlist)
     db.commit()
     db.refresh(new_playlist)
-
     return {"message": f"Playlist {new_playlist.name} created successfully", "playlist_id": new_playlist.id}
 
 
-# Add a song to a playlist by its ID, and return a message confirming the addition. If the playlist or song does not exist, return a 404 error.
 @router.post("/{playlist_id}/add_music")
 async def add_music_to_playlist(playlist_id: int, song_id: int, db: Session = Depends(get_db)):
+    playlist = db.query(models.Playlist).filter(models.Playlist.id == playlist_id).first()
+    if not playlist:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Playlist with id {playlist_id} not found")
     song_to_add = db.query(models.Song).filter(models.Song.id == song_id).first()
     if not song_to_add:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
     db.execute(models.playlist_songs.insert().values(playlist_id=playlist_id, song_id=song_id))
     db.commit()
-
     return {"message": f"Song {song_to_add.title} added to playlist {playlist_id}"}
 
 
-# Remove a song from a playlist by providing the playlist ID and song ID. If either the playlist or song does not exist, return a 404 error. Otherwise, return a message confirming the removal of the song from the playlist.
 @router.post("/{playlist_id}/remove_music")
 async def remove_music_from_playlist(playlist_id: int, song_id: int, db: Session = Depends(get_db)):
     song_to_remove = db.query(models.Song).filter(models.Song.id == song_id).first()
     if not song_to_remove:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
-    db.execute(models.playlist_songs.delete()(models.playlist_songs.c.playlist_id == playlist_id) & (models.playlist_songs.c.song_id == song_id))
+    db.execute(models.playlist_songs.delete().where(
+        (models.playlist_songs.c.playlist_id == playlist_id) &
+        (models.playlist_songs.c.song_id == song_id)
+    ))
     db.commit()
     return {"message": f"Song {song_to_remove.title} removed from playlist {playlist_id}"}
 
 
-# Get a playlist by its ID, and return the playlist details along with the list of songs in the playlist. If the playlist does not exist, return a 404 error.
 @router.get("/{playlist_id}")
 async def get_playlist(playlist_id: int, db: Session = Depends(get_db)):
     playlist = db.query(models.Playlist).filter(models.Playlist.id == playlist_id).first()
     if not playlist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Playlist with id {playlist_id} not found")
-    return playlist
+    return playlist_to_dict(playlist)
 
-# Delete a playlist by its ID, and return a message confirming the deletion. If the playlist does not exist, return a 404 error.
+
+@router.get("/{playlist_id}/songs")
+async def get_playlist_songs(playlist_id: int, db: Session = Depends(get_db)):
+    playlist = db.query(models.Playlist).filter(models.Playlist.id == playlist_id).first()
+    if not playlist:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Playlist with id {playlist_id} not found")
+
+    songs = playlist.songs
+    if playlist.target_bpm and songs:
+        songs = sorted(songs, key=lambda s: abs((s.bpm or 0) - playlist.target_bpm))
+
+    return {
+        "playlist": playlist_to_dict(playlist),
+        "songs": [song_to_dict(s) for s in songs],
+    }
+
+
 @router.delete("/{playlist_id}")
 async def delete_playlist(playlist_id: int, db: Session = Depends(get_db)):
     playlist = db.query(models.Playlist).filter(models.Playlist.id == playlist_id).first()
@@ -62,6 +94,4 @@ async def delete_playlist(playlist_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Playlist with id {playlist_id} not found")
     db.delete(playlist)
     db.commit()
-    return {"message": f"Delete playlist {playlist_id}"}
-
-
+    return {"message": f"Playlist {playlist_id} deleted"}

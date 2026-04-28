@@ -20,7 +20,7 @@ def get_users():
 # Create user endpoint - creates a new user in the database using the data from the request body and returns a success message with the new user's ID.
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserBase, db: Session = Depends(get_db)):
-    new_user = models.User(**dict(user)) # create a new user instance using the User model
+    new_user = models.User(**user.model_dump(exclude_none=True)) # create a new user instance using the User model
     db.add(new_user)                     # and the data from the request body
     db.commit()
     db.refresh(new_user)
@@ -45,7 +45,7 @@ async def update_user(user: UserBase, user_id: int, db: Session = Depends(get_db
     if not user_to_update:
         raise HTTPException(status_code=404, detail="User not found")
     
-    for key, value in dict(user).items():
+    for key, value in user.model_dump(exclude_none=True).items():
         setattr(user_to_update, key, value)
     db.commit()
     db.refresh(user_to_update)

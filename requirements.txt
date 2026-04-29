@@ -9,3 +9,6 @@ requests
 librosa
 deeprhythm
 numpy
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart

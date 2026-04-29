@@ -4,8 +4,10 @@ import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api, type ApiSearchResult, type ApiSong } from "@/lib/api";
 import { formatDuration } from "@/lib/format";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SearchSong() {
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [album, setAlbum] = useState("");
@@ -45,6 +47,7 @@ export default function SearchSong() {
         title: title.trim(),
         artist: artist.trim(),
         album: album.trim(),
+        ...(user ? { owner_id: user.id } : {}),
       });
       setResult(data);
     } catch (err: any) {

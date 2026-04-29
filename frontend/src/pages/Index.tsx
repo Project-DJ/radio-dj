@@ -1,14 +1,17 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { MusicLibrarySidebar } from "@/components/Sidebar";
 import { AlbumCard } from "@/components/AlbumCard";
+import { useAuth } from "@/contexts/AuthContext";
 
 const toggle = (arr: string[], val: string) =>
   arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
 
 const Index = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [genres, setGenres] = useState<string[]>([]);
   const [artists, setArtists] = useState<string[]>([]);
   const [years, setYears] = useState<string[]>([]);
@@ -57,7 +60,27 @@ const Index = () => {
               3-2-1 Radio!!!
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-display uppercase tracking-wider text-muted-foreground">
+                  ★ {user.username}
+                </span>
+                <button
+                  onClick={() => { logout(); navigate("/login"); }}
+                  className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-card hover:bg-y2k-blush transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-card hover:bg-y2k-blush transition-colors"
+              >
+                Sign In
+              </Link>
+            )}
             <Link
               to="/catalog"
               className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-card hover:bg-y2k-blush transition-colors"

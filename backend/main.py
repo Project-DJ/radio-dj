@@ -1,7 +1,7 @@
 import fastapi
 import backend.models
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routes import albums, songs, users, playlists
+from backend.routes import albums, songs, users, playlists, auth
 from backend.db.database import Base, engine
 
 # Create the database tables from the models
@@ -18,6 +18,7 @@ app.include_router(users.router)
 app.include_router(playlists.router)
 app.include_router(albums.router)
 app.include_router(songs.router)
+app.include_router(auth.router)
 
 @app.get("/")
 async def root():

@@ -22,6 +22,7 @@ class SongSearchInput(BaseModel):
     title: str
     artist: str
     album: str
+    owner_id: int | None = None
 
 
 load_dotenv()
@@ -83,6 +84,7 @@ async def search_and_add(body: SongSearchInput, db: Session = Depends(get_db)):
         duration_ms=metadata["duration_ms"],
         artist_genre=genre_str,
         release_date=metadata.get("release_date"),
+        owner_id=body.owner_id,
     )
     db.add(new_song)
     db.commit()

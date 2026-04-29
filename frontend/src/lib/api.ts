@@ -68,7 +68,7 @@ export const api = {
     get: (id: number) => request<ApiSong>(`/songs/${id}`),
     create: (data: Omit<ApiSong, "id">) =>
       request("/songs/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
-    searchAndAdd: (data: { title: string; artist: string; album: string }) =>
+    searchAndAdd: (data: { title: string; artist: string; album: string; owner_id?: number }) =>
       request<ApiSearchResult>("/songs/search_and_add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

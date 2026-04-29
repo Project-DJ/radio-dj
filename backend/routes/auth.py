@@ -1,13 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+import bcrypt
 from .. import models
 from ..db.database import get_db
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
 class RegisterInput(BaseModel):
@@ -35,7 +41,7 @@ async def register(body: RegisterInput, db: Session = Depends(get_db)):
     new_user = models.User(
         username=body.username,
         email=body.email,
-        password_hash=pwd_context.hash(body.password),
+        password_hash=hash_password(body.password),
     )
     db.add(new_user)
     db.commit()
@@ -46,6 +52,6 @@ async def register(body: RegisterInput, db: Session = Depends(get_db)):
 @router.post("/login")
 async def login(body: LoginInput, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == body.email).first()
-    if not user or not pwd_context.verify(body.password, user.password_hash):
+    if not user or not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     return {"message": f"Welcome back, {user.username}!", "user": user_to_dict(user)}

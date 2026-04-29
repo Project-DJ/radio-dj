@@ -92,7 +92,7 @@ export default function CreatePlaylist() {
 
           <button
             type="submit"
-            disabled={loading || !name.trim() || !description.trim()}
+            disabled={loading || !name.trim()}
             className="mt-2 px-4 py-2 font-display text-xs uppercase tracking-wider y2k-border y2k-shadow bg-foreground text-primary-foreground hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Creating..." : "Create Playlist ★"}

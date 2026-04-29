@@ -51,6 +51,14 @@ async def add_music_to_playlist(playlist_id: int, song_id: int, db: Session = De
     song_to_add = db.query(models.Song).filter(models.Song.id == song_id).first()
     if not song_to_add:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
+    already_in = db.execute(
+        models.playlist_songs.select().where(
+            (models.playlist_songs.c.playlist_id == playlist_id) &
+            (models.playlist_songs.c.song_id == song_id)
+        )
+    ).first()
+    if already_in:
+        raise HTTPException(status_code=400, detail="Song already in playlist")
     db.execute(models.playlist_songs.insert().values(playlist_id=playlist_id, song_id=song_id))
     db.commit()
 

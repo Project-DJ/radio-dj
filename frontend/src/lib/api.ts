@@ -72,6 +72,14 @@ export const api = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       }),
+    detectBpm: (songId: number, file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      return request<{ song_id: number; title: string; bpm: number }>(
+        `/songs/${songId}/detect_bpm`,
+        { method: "POST", body: form }
+      );
+    },
   },
   playlists: {
     list: () => request<ApiPlaylist[]>("/playlists/"),

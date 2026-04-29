@@ -5,9 +5,11 @@ allowing user to only enter title, artist, and album.
 """
 
 import os
+import tempfile
 import requests
 import base64
-from fastapi import APIRouter, Depends, status, HTTPException
+import librosa
+from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from ..schemas.song import SongBase
@@ -86,6 +88,27 @@ async def search_and_add(body: SongSearchInput, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_song)
     return {"song": song_to_dict(new_song), "spotify": metadata, "created": True}
+
+
+@router.post("/{song_id}/detect_bpm")
+async def detect_bpm(song_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    song = db.query(models.Song).filter(models.Song.id == song_id).first()
+    if not song:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Song not found")
+
+    suffix = os.path.splitext(file.filename)[1] or ".mp3"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+
+    y, sr = librosa.load(tmp_path, mono=True)
+    tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+    os.unlink(tmp_path)
+
+    song.bpm = round(float(tempo), 1)
+    db.commit()
+    db.refresh(song)
+    return {"song_id": song.id, "title": song.title, "bpm": song.bpm}
 
 
 @router.get("/{song_id}")

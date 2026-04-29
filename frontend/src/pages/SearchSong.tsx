@@ -12,12 +12,19 @@ export default function SearchSong() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApiSearchResult | null>(null);
 
+  const [bpmFile, setBpmFile] = useState<File | null>(null);
+  const [bpmLoading, setBpmLoading] = useState(false);
+  const [bpmError, setBpmError] = useState<string | null>(null);
+  const [detectedBpm, setDetectedBpm] = useState<number | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !artist.trim() || !album.trim()) return;
     setLoading(true);
     setError(null);
     setResult(null);
+    setDetectedBpm(null);
+    setBpmFile(null);
     try {
       const data = await api.songs.searchAndAdd({ title: title.trim(), artist: artist.trim(), album: album.trim() });
       setResult(data);
@@ -25,6 +32,21 @@ export default function SearchSong() {
       setError(err.message ?? "Something went wrong");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDetectBpm = async () => {
+    if (!bpmFile || !result?.song.id) return;
+    setBpmLoading(true);
+    setBpmError(null);
+    try {
+      const data = await api.songs.detectBpm(result.song.id, bpmFile);
+      setDetectedBpm(data.bpm);
+      setResult((prev) => prev ? { ...prev, song: { ...prev.song, bpm: data.bpm } } : prev);
+    } catch (err: any) {
+      setBpmError("BPM detection failed — make sure the file is a valid audio file");
+    } finally {
+      setBpmLoading(false);
     }
   };
 
@@ -132,8 +154,41 @@ export default function SearchSong() {
             <Row label="Popularity" value={`${s.popularity} / 100`} />
             <Row label="Explicit" value={s.explicit ? "Yes" : "No"} />
             <Row label="ISRC" value={s.isrc ?? "—"} />
-            {song.bpm && <Row label="BPM" value={String(song.bpm)} />}
+            <Row label="BPM" value={song.bpm ? `${song.bpm} BPM` : "Not detected yet"} />
             <Row label="Saved ID" value={`#${song.id}`} />
+          </div>
+
+          {/* BPM Detection */}
+          <div className="border-t-[3px] border-foreground p-4">
+            <p className="text-[10px] font-display uppercase tracking-wider mb-3">
+              ♪ Detect BPM from Audio File
+            </p>
+            <p className="text-[10px] font-body text-muted-foreground mb-3">
+              Upload the song's audio file (mp3, wav, flac) and we'll analyze it with librosa to detect the exact BPM.
+            </p>
+            <div className="flex gap-2 items-center">
+              <input
+                type="file"
+                accept=".mp3,.wav,.flac,.ogg,.m4a"
+                onChange={(e) => setBpmFile(e.target.files?.[0] ?? null)}
+                className="flex-1 text-xs font-body y2k-border px-2 py-1.5 bg-background file:mr-2 file:text-[10px] file:font-display file:uppercase file:border-0 file:bg-y2k-lavender file:px-2 file:py-1 cursor-pointer"
+              />
+              <button
+                onClick={handleDetectBpm}
+                disabled={!bpmFile || bpmLoading}
+                className="px-3 py-1.5 text-[10px] font-display uppercase tracking-wider y2k-border bg-foreground text-primary-foreground hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              >
+                {bpmLoading ? "Analyzing..." : "Detect"}
+              </button>
+            </div>
+            {bpmError && (
+              <p className="text-[10px] font-body text-destructive mt-2">{bpmError}</p>
+            )}
+            {detectedBpm && (
+              <p className="text-[10px] font-body text-green-600 mt-2">
+                ✓ BPM detected and saved: <span className="font-semibold">{detectedBpm} BPM</span>
+              </p>
+            )}
           </div>
         </div>
       )}

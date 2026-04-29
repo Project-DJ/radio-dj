@@ -71,6 +71,12 @@ const Index = () => {
               + New Playlist
             </Link>
             <Link
+              to="/albums/new"
+              className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-card hover:bg-y2k-blush transition-colors"
+            >
+              + Add Album
+            </Link>
+            <Link
               to="/search"
               className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-foreground text-primary-foreground hover:bg-primary transition-colors"
             >

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api, type ApiSearchResult, type ApiSong } from "@/lib/api";
 import { formatDuration } from "@/lib/format";
@@ -13,6 +13,7 @@ export default function SearchSong() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApiSearchResult | null>(null);
 
+  const [showBpmSection, setShowBpmSection] = useState(false);
   const [bpmFile, setBpmFile] = useState<File | null>(null);
   const [bpmLoading, setBpmLoading] = useState(false);
   const [bpmError, setBpmError] = useState<string | null>(null);
@@ -36,8 +37,15 @@ export default function SearchSong() {
     setResult(null);
     setDetectedBpm(null);
     setBpmFile(null);
+    setShowBpmSection(false);
+    setRecommendations([]);
+    setAddedSongs(new Set());
     try {
-      const data = await api.songs.searchAndAdd({ title: title.trim(), artist: artist.trim(), album: album.trim() });
+      const data = await api.songs.searchAndAdd({
+        title: title.trim(),
+        artist: artist.trim(),
+        album: album.trim(),
+      });
       setResult(data);
     } catch (err: any) {
       setError(err.message ?? "Something went wrong");
@@ -54,32 +62,32 @@ export default function SearchSong() {
       const data = await api.songs.detectBpm(result.song.id, bpmFile);
       setDetectedBpm(data.bpm);
       setResult((prev) => prev ? { ...prev, song: { ...prev.song, bpm: data.bpm } } : prev);
-    } catch (err: any) {
-      setBpmError("BPM detection failed — make sure the file is a valid audio file");
+    } catch {
+      setBpmError("Detection failed — make sure the file is a valid audio file.");
     } finally {
       setBpmLoading(false);
     }
   };
 
   const handleAddToPlaylist = async () => {
-    if (!selectedPlaylistId || !song?.id) return;
+    if (!selectedPlaylistId || !result?.song.id) return;
     setAddingToPlaylist(true);
     try {
-      const data = await api.playlists.addSong(Number(selectedPlaylistId), song.id);
+      const data = await api.playlists.addSong(Number(selectedPlaylistId), result.song.id);
+      setAddedSongs((prev) => new Set(prev).add(result.song.id));
       setRecommendations(data.recommendations);
-      setAddedSongs((prev) => new Set(prev).add(song.id));
     } catch {
-      // already in playlist or other error — silently ignore for demo
+      // already in playlist
     } finally {
       setAddingToPlaylist(false);
     }
   };
 
-  const handleAddRecommendation = async (recSong: ApiSong) => {
+  const handleAddRecommendation = async (rec: ApiSong) => {
     if (!selectedPlaylistId) return;
     try {
-      await api.playlists.addSong(Number(selectedPlaylistId), recSong.id);
-      setAddedSongs((prev) => new Set(prev).add(recSong.id));
+      await api.playlists.addSong(Number(selectedPlaylistId), rec.id);
+      setAddedSongs((prev) => new Set(prev).add(rec.id));
     } catch {
       // ignore
     }
@@ -97,12 +105,13 @@ export default function SearchSong() {
         <ArrowLeft className="h-4 w-4" /> Back to Library
       </Link>
 
-      <h1 className="text-2xl font-display uppercase tracking-wider mb-6">★ Add Song ★</h1>
+      <h1 className="text-2xl font-display uppercase tracking-wider mb-2">★ Add Song ★</h1>
+      <p className="text-xs font-body text-muted-foreground mb-6">
+        Enter the title, artist, and album — we'll pull the full metadata from Spotify and save it to your catalog instantly.
+      </p>
 
+      {/* Search Form */}
       <form onSubmit={handleSubmit} className="y2k-border y2k-shadow bg-card p-6 mb-6">
-        <p className="text-xs font-body text-muted-foreground mb-4">
-          Enter the song details and we'll pull the full metadata from Spotify.
-        </p>
         <div className="flex flex-col gap-3">
           <div>
             <label className="block text-[10px] font-display uppercase tracking-wider mb-1">Title</label>
@@ -136,7 +145,7 @@ export default function SearchSong() {
             disabled={loading || !title.trim() || !artist.trim() || !album.trim()}
             className="mt-2 px-4 py-2 font-display text-xs uppercase tracking-wider y2k-border y2k-shadow bg-foreground text-primary-foreground hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Searching Spotify..." : "Search & Add ★"}
+            {loading ? "Searching Spotify..." : "Search & Save to Catalog ★"}
           </button>
         </div>
       </form>
@@ -144,16 +153,18 @@ export default function SearchSong() {
       {error && (
         <div className="y2k-border bg-destructive/10 p-4 mb-6">
           <p className="font-display text-xs uppercase text-destructive">
-            {error.includes("404") ? "Song not found on Spotify — try different search terms" : error}
+            {error.includes("404") ? "Song not found on Spotify — check your spelling and try again" : error}
           </p>
         </div>
       )}
 
       {result && s && song && (
         <div className="y2k-border y2k-shadow bg-card overflow-hidden">
+
+          {/* Status banner */}
           <div className="bg-y2k-blush border-b-[3px] border-foreground px-4 py-3 flex items-center justify-between">
             <span className="font-display text-xs uppercase tracking-wider">
-              {result.created ? "✓ Added to Library" : "Already in Library"}
+              {result.created ? "✓ Saved to your catalog" : "Already in your catalog"}
             </span>
             {s.spotify_url && (
               <a
@@ -167,6 +178,7 @@ export default function SearchSong() {
             )}
           </div>
 
+          {/* Song header */}
           <div className="flex gap-4 p-4 border-b-2 border-foreground/10">
             {s.album_images[0] && (
               <img
@@ -175,29 +187,28 @@ export default function SearchSong() {
                 className="w-24 h-24 shrink-0 y2k-border object-cover"
               />
             )}
-            <div>
+            <div className="flex flex-col justify-center">
               <h2 className="font-display text-sm uppercase tracking-wider">{s.track_name}</h2>
               <p className="text-xs font-body text-muted-foreground mt-1">{s.artist_names.join(", ")}</p>
               <p className="text-xs font-body text-muted-foreground">{s.album_name}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-0 divide-x-2 divide-y-2 divide-foreground/10">
+          {/* Metadata grid */}
+          <div className="grid grid-cols-2 divide-x-2 divide-y-2 divide-foreground/10">
             <Row label="Duration" value={formatDuration(Math.floor(s.duration_ms / 1000))} />
             <Row label="Release Date" value={s.release_date ?? "—"} />
             <Row label="Genres" value={s.artist_genres.length ? s.artist_genres.join(", ") : "—"} />
             <Row label="Popularity" value={`${s.popularity} / 100`} />
             <Row label="Explicit" value={s.explicit ? "Yes" : "No"} />
             <Row label="ISRC" value={s.isrc ?? "—"} />
-            <Row label="BPM" value={song.bpm ? `${song.bpm} BPM` : "Not detected yet"} />
-            <Row label="Saved ID" value={`#${song.id}`} />
+            <Row label="BPM" value={song.bpm ? `${song.bpm} BPM` : "Not detected"} />
+            <Row label="Catalog ID" value={`#${song.id}`} />
           </div>
 
-          {/* Add to Playlist */}
+          {/* Add to playlist */}
           <div className="border-t-[3px] border-foreground p-4">
-            <p className="text-[10px] font-display uppercase tracking-wider mb-3">
-              ♪ Add to Playlist
-            </p>
+            <p className="text-[10px] font-display uppercase tracking-wider mb-3">Add to Playlist</p>
             <div className="flex gap-2">
               <select
                 value={selectedPlaylistId}
@@ -213,15 +224,23 @@ export default function SearchSong() {
               </select>
               <button
                 onClick={handleAddToPlaylist}
-                disabled={!selectedPlaylistId || addingToPlaylist || addedSongs.has(song?.id ?? -1)}
+                disabled={!selectedPlaylistId || addingToPlaylist || addedSongs.has(song.id)}
                 className="px-3 py-1.5 text-[10px] font-display uppercase tracking-wider y2k-border bg-foreground text-primary-foreground hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               >
-                {addedSongs.has(song?.id ?? -1) ? "✓ Added" : addingToPlaylist ? "Adding..." : "Add"}
+                {addedSongs.has(song.id) ? "✓ Added" : addingToPlaylist ? "Adding..." : "Add"}
               </button>
             </div>
+            {playlists.length === 0 && (
+              <p className="text-[10px] font-body text-muted-foreground mt-2">
+                No playlists yet —{" "}
+                <Link to="/playlists/new" className="underline hover:text-primary">
+                  create one first
+                </Link>
+              </p>
+            )}
           </div>
 
-          {/* BPM Recommendations */}
+          {/* BPM recommendations */}
           {recommendations.length > 0 && (
             <div className="border-t-[3px] border-foreground p-4 bg-y2k-blush/30">
               <p className="text-[10px] font-display uppercase tracking-wider mb-3">
@@ -252,38 +271,50 @@ export default function SearchSong() {
             </div>
           )}
 
-          {/* BPM Detection */}
-          <div className="border-t-[3px] border-foreground p-4">
-            <p className="text-[10px] font-display uppercase tracking-wider mb-3">
-              ♪ Detect BPM from Audio File
-            </p>
-            <p className="text-[10px] font-body text-muted-foreground mb-3">
-              Upload the song's audio file (mp3, wav, flac) and we'll analyze it with librosa to detect the exact BPM.
-            </p>
-            <div className="flex gap-2 items-center">
-              <input
-                type="file"
-                accept=".mp3,.wav,.flac,.ogg,.m4a"
-                onChange={(e) => setBpmFile(e.target.files?.[0] ?? null)}
-                className="flex-1 text-xs font-body y2k-border px-2 py-1.5 bg-background file:mr-2 file:text-[10px] file:font-display file:uppercase file:border-0 file:bg-y2k-lavender file:px-2 file:py-1 cursor-pointer"
-              />
-              <button
-                onClick={handleDetectBpm}
-                disabled={!bpmFile || bpmLoading}
-                className="px-3 py-1.5 text-[10px] font-display uppercase tracking-wider y2k-border bg-foreground text-primary-foreground hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-              >
-                {bpmLoading ? "Analyzing..." : "Detect"}
-              </button>
-            </div>
-            {bpmError && (
-              <p className="text-[10px] font-body text-destructive mt-2">{bpmError}</p>
-            )}
-            {detectedBpm && (
-              <p className="text-[10px] font-body text-green-600 mt-2">
-                ✓ BPM detected and saved: <span className="font-semibold">{detectedBpm} BPM</span>
-              </p>
+          {/* Optional BPM detection — collapsed by default */}
+          <div className="border-t-[3px] border-foreground">
+            <button
+              onClick={() => setShowBpmSection((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-y2k-blush/30 transition-colors"
+            >
+              <span className="text-[10px] font-display uppercase tracking-wider">
+                ♪ Detect BPM from audio file <span className="text-muted-foreground">(optional)</span>
+              </span>
+              {showBpmSection ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+
+            {showBpmSection && (
+              <div className="px-4 pb-4">
+                <p className="text-[10px] font-body text-muted-foreground mb-3">
+                  Upload the audio file to auto-detect the exact BPM using librosa. This improves playlist recommendations.
+                </p>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="file"
+                    accept=".mp3,.wav,.flac,.ogg,.m4a"
+                    onChange={(e) => setBpmFile(e.target.files?.[0] ?? null)}
+                    className="flex-1 text-xs font-body y2k-border px-2 py-1.5 bg-background file:mr-2 file:text-[10px] file:font-display file:uppercase file:border-0 file:bg-y2k-lavender file:px-2 file:py-1 cursor-pointer"
+                  />
+                  <button
+                    onClick={handleDetectBpm}
+                    disabled={!bpmFile || bpmLoading}
+                    className="px-3 py-1.5 text-[10px] font-display uppercase tracking-wider y2k-border bg-foreground text-primary-foreground hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  >
+                    {bpmLoading ? "Analyzing..." : "Detect"}
+                  </button>
+                </div>
+                {bpmError && (
+                  <p className="text-[10px] font-body text-destructive mt-2">{bpmError}</p>
+                )}
+                {detectedBpm && (
+                  <p className="text-[10px] font-body text-green-600 mt-2">
+                    ✓ BPM detected and saved: <span className="font-semibold">{detectedBpm} BPM</span>
+                  </p>
+                )}
+              </div>
             )}
           </div>
+
         </div>
       )}
     </div>

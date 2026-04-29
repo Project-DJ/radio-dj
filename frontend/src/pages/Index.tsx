@@ -57,12 +57,20 @@ const Index = () => {
               3-2-1 Radio!!!
             </p>
           </div>
-          <Link
-            to="/search"
-            className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-foreground text-primary-foreground hover:bg-primary transition-colors"
-          >
-            + Add Song
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              to="/playlists/new"
+              className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-card hover:bg-y2k-blush transition-colors"
+            >
+              + New Playlist
+            </Link>
+            <Link
+              to="/search"
+              className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-foreground text-primary-foreground hover:bg-primary transition-colors"
+            >
+              + Add Song
+            </Link>
+          </div>
         </div>
 
         {isLoading && (

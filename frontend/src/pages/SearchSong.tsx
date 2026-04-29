@@ -205,7 +205,7 @@ export default function SearchSong() {
             <Row label="Popularity" value={`${s.popularity} / 100`} />
             <Row label="Explicit" value={s.explicit ? "Yes" : "No"} />
             <Row label="ISRC" value={s.isrc ?? "—"} />
-            <Row label="BPM" value={song.bpm ? `${song.bpm} BPM` : "Not detected"} />
+            <Row label="BPM" value={song.bpm ? `${song.bpm} BPM` : s.tempo ? `${s.tempo} BPM` : "Not detected"} />
             <Row label="Catalog ID" value={`#${song.id}`} />
           </div>
 

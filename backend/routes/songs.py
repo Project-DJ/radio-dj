@@ -84,6 +84,7 @@ async def search_and_add(body: SongSearchInput, db: Session = Depends(get_db)):
         duration_ms=metadata["duration_ms"],
         artist_genre=genre_str,
         release_date=metadata.get("release_date"),
+        bpm=metadata.get("tempo"),
         owner_id=body.owner_id,
     )
     db.add(new_song)
@@ -178,6 +179,14 @@ def get_artist(artist_id, token):
     return r.json()
 
 
+def get_audio_features(track_id, token):
+    r = requests.get(f"https://api.spotify.com/v1/audio-features/{track_id}",
+                     headers={"Authorization": f"Bearer {token}"}, timeout=15)
+    if r.status_code == 200:
+        return r.json()
+    return None
+
+
 def get_song_metadata(song_name, artist, album):
     token = get_access_token()
     query = f'track:"{song_name}" artist:"{artist}" album:"{album}"'
@@ -190,6 +199,8 @@ def get_song_metadata(song_name, artist, album):
         return None
     track = items[0]
     artist_data = get_artist(track["artists"][0]["id"], token)
+    audio_features = get_audio_features(track["id"], token)
+    tempo = round(audio_features["tempo"], 1) if audio_features and audio_features.get("tempo") else None
     return {
         "track_name": track["name"],
         "track_id": track["id"],
@@ -203,4 +214,5 @@ def get_song_metadata(song_name, artist, album):
         "popularity": track.get("popularity"),
         "isrc": track.get("external_ids", {}).get("isrc"),
         "album_images": track["album"].get("images", []),
+        "tempo": tempo,
     }

@@ -34,6 +34,7 @@ export interface ApiSpotifyMetadata {
   popularity: number;
   isrc: string | null;
   album_images: { url: string; width: number; height: number }[];
+  tempo: number | null;
 }
 
 export interface ApiSearchResult {

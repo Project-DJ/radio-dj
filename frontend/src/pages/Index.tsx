@@ -59,6 +59,12 @@ const Index = () => {
           </div>
           <div className="flex gap-2">
             <Link
+              to="/catalog"
+              className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-card hover:bg-y2k-blush transition-colors"
+            >
+              My Catalog
+            </Link>
+            <Link
               to="/playlists/new"
               className="px-3 py-2 text-xs font-display uppercase tracking-wider y2k-border y2k-shadow bg-card hover:bg-y2k-blush transition-colors"
             >

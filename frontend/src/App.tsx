@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound.tsx";
 import AlbumDetail from "./pages/AlbumDetails.tsx";
 import SearchSong from "./pages/SearchSong.tsx";
 import CreatePlaylist from "./pages/CreatePlaylist.tsx";
+import Catalog from "./pages/Catalog.tsx";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/album/:id" element={<AlbumDetail />} />
           <Route path="/search" element={<SearchSong />} />
           <Route path="/playlists/new" element={<CreatePlaylist />} />
+          <Route path="/catalog" element={<Catalog />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

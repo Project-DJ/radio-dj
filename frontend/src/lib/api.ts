@@ -16,6 +16,8 @@ export interface ApiSong {
   album: string;
   duration_ms: number;
   bpm?: number | null;
+  artist_genre?: string | null;
+  release_date?: string | null;
   owner_id: number;
 }
 

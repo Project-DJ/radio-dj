@@ -28,6 +28,12 @@ def song_to_dict(s):
     }
 
 
+@router.get("/")
+async def get_playlists(db: Session = Depends(get_db)):
+    playlists = db.query(models.Playlist).all()
+    return [playlist_to_dict(p) for p in playlists]
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_playlist(playlist: PlaylistBase, db: Session = Depends(get_db)):
     new_playlist = models.Playlist(**playlist.model_dump(exclude_none=True))
@@ -47,7 +53,25 @@ async def add_music_to_playlist(playlist_id: int, song_id: int, db: Session = De
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
     db.execute(models.playlist_songs.insert().values(playlist_id=playlist_id, song_id=song_id))
     db.commit()
-    return {"message": f"Song {song_to_add.title} added to playlist {playlist_id}"}
+
+    recommendations = []
+    if song_to_add.bpm:
+        existing_ids = {s.id for s in playlist.songs}
+        recommendations = (
+            db.query(models.Song)
+            .filter(
+                models.Song.bpm.between(song_to_add.bpm - 10, song_to_add.bpm + 10),
+                models.Song.id != song_id,
+                ~models.Song.id.in_(existing_ids),
+            )
+            .limit(5)
+            .all()
+        )
+
+    return {
+        "message": f"Song {song_to_add.title} added to playlist {playlist_id}",
+        "recommendations": [song_to_dict(s) for s in recommendations],
+    }
 
 
 @router.post("/{playlist_id}/remove_music")

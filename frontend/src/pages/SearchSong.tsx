@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { api, type ApiSearchResult } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { api, type ApiSearchResult, type ApiSong } from "@/lib/api";
 import { formatDuration } from "@/lib/format";
 
 export default function SearchSong() {
@@ -16,6 +17,16 @@ export default function SearchSong() {
   const [bpmLoading, setBpmLoading] = useState(false);
   const [bpmError, setBpmError] = useState<string | null>(null);
   const [detectedBpm, setDetectedBpm] = useState<number | null>(null);
+
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>("");
+  const [addingToPlaylist, setAddingToPlaylist] = useState(false);
+  const [recommendations, setRecommendations] = useState<ApiSong[]>([]);
+  const [addedSongs, setAddedSongs] = useState<Set<number>>(new Set());
+
+  const { data: playlists = [] } = useQuery({
+    queryKey: ["playlists"],
+    queryFn: api.playlists.list,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +58,30 @@ export default function SearchSong() {
       setBpmError("BPM detection failed — make sure the file is a valid audio file");
     } finally {
       setBpmLoading(false);
+    }
+  };
+
+  const handleAddToPlaylist = async () => {
+    if (!selectedPlaylistId || !song?.id) return;
+    setAddingToPlaylist(true);
+    try {
+      const data = await api.playlists.addSong(Number(selectedPlaylistId), song.id);
+      setRecommendations(data.recommendations);
+      setAddedSongs((prev) => new Set(prev).add(song.id));
+    } catch {
+      // already in playlist or other error — silently ignore for demo
+    } finally {
+      setAddingToPlaylist(false);
+    }
+  };
+
+  const handleAddRecommendation = async (recSong: ApiSong) => {
+    if (!selectedPlaylistId) return;
+    try {
+      await api.playlists.addSong(Number(selectedPlaylistId), recSong.id);
+      setAddedSongs((prev) => new Set(prev).add(recSong.id));
+    } catch {
+      // ignore
     }
   };
 
@@ -157,6 +192,65 @@ export default function SearchSong() {
             <Row label="BPM" value={song.bpm ? `${song.bpm} BPM` : "Not detected yet"} />
             <Row label="Saved ID" value={`#${song.id}`} />
           </div>
+
+          {/* Add to Playlist */}
+          <div className="border-t-[3px] border-foreground p-4">
+            <p className="text-[10px] font-display uppercase tracking-wider mb-3">
+              ♪ Add to Playlist
+            </p>
+            <div className="flex gap-2">
+              <select
+                value={selectedPlaylistId}
+                onChange={(e) => setSelectedPlaylistId(e.target.value)}
+                className="flex-1 px-3 py-1.5 text-xs font-body y2k-border bg-background focus:outline-none"
+              >
+                <option value="">Select a playlist...</option>
+                {playlists.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}{p.target_bpm ? ` — ${p.target_bpm} BPM` : ""}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleAddToPlaylist}
+                disabled={!selectedPlaylistId || addingToPlaylist || addedSongs.has(song?.id ?? -1)}
+                className="px-3 py-1.5 text-[10px] font-display uppercase tracking-wider y2k-border bg-foreground text-primary-foreground hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              >
+                {addedSongs.has(song?.id ?? -1) ? "✓ Added" : addingToPlaylist ? "Adding..." : "Add"}
+              </button>
+            </div>
+          </div>
+
+          {/* BPM Recommendations */}
+          {recommendations.length > 0 && (
+            <div className="border-t-[3px] border-foreground p-4 bg-y2k-blush/30">
+              <p className="text-[10px] font-display uppercase tracking-wider mb-3">
+                ★ Similar Energy — Songs within ±10 BPM
+              </p>
+              <div className="flex flex-col gap-2">
+                {recommendations.map((rec) => (
+                  <div key={rec.id} className="flex items-center gap-3 y2k-border bg-card px-3 py-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-body font-semibold truncate">{rec.title}</p>
+                      <p className="text-[10px] font-body text-muted-foreground truncate">{rec.artist}</p>
+                    </div>
+                    {rec.bpm && (
+                      <span className="text-[10px] font-body text-muted-foreground shrink-0">
+                        {rec.bpm} BPM
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleAddRecommendation(rec)}
+                      disabled={addedSongs.has(rec.id)}
+                      className="text-[10px] font-display uppercase y2k-border px-2 py-1 bg-foreground text-primary-foreground hover:bg-primary transition-colors disabled:opacity-50 shrink-0"
+                    >
+                      {addedSongs.has(rec.id) ? "✓" : "+ Add"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* BPM Detection */}
           <div className="border-t-[3px] border-foreground p-4">

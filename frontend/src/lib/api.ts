@@ -88,7 +88,10 @@ export const api = {
     create: (data: Omit<ApiPlaylist, "id">) =>
       request("/playlists/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
     addSong: (playlistId: number, songId: number) =>
-      request(`/playlists/${playlistId}/add_music?song_id=${songId}`, { method: "POST" }),
+      request<{ message: string; recommendations: ApiSong[] }>(
+        `/playlists/${playlistId}/add_music?song_id=${songId}`,
+        { method: "POST" }
+      ),
     removeSong: (playlistId: number, songId: number) =>
       request(`/playlists/${playlistId}/remove_music?song_id=${songId}`, { method: "POST" }),
   },

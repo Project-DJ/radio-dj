@@ -30,7 +30,7 @@ class LoginInput(BaseModel):
 def user_to_dict(u):
     return {"id": u.id, "username": u.username, "email": u.email}
 
-
+#creates a new user and adds them to the database HTTPException if email or username is already in use
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(body: RegisterInput, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.email == body.email).first():
@@ -48,7 +48,7 @@ async def register(body: RegisterInput, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return {"message": f"Welcome, {new_user.username}!", "user": user_to_dict(new_user)}
 
-
+#takes user input to verify and log them in
 @router.post("/login")
 async def login(body: LoginInput, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == body.email).first()

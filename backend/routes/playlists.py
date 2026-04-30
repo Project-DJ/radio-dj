@@ -27,13 +27,13 @@ def song_to_dict(s):
         "owner_id": s.owner_id,
     }
 
-
+#collects playlists from database
 @router.get("/")
 async def get_playlists(db: Session = Depends(get_db)):
     playlists = db.query(models.Playlist).all()
     return [playlist_to_dict(p) for p in playlists]
 
-
+#creates a playlist and adds it to the database
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_playlist(playlist: PlaylistBase, db: Session = Depends(get_db)):
     new_playlist = models.Playlist(**playlist.model_dump(exclude_none=True))
@@ -42,7 +42,7 @@ async def create_playlist(playlist: PlaylistBase, db: Session = Depends(get_db))
     db.refresh(new_playlist)
     return {"message": f"Playlist {new_playlist.name} created successfully", "playlist_id": new_playlist.id}
 
-
+#adds a song to a playlist HTTPException if selected song cannot be found or is already in playlist
 @router.post("/{playlist_id}/add_music")
 async def add_music_to_playlist(playlist_id: int, song_id: int, db: Session = Depends(get_db)):
     playlist = db.query(models.Playlist).filter(models.Playlist.id == playlist_id).first()
@@ -81,7 +81,7 @@ async def add_music_to_playlist(playlist_id: int, song_id: int, db: Session = De
         "recommendations": [song_to_dict(s) for s in recommendations],
     }
 
-
+#removes a song from a playlist HTTPException if the song is not found
 @router.post("/{playlist_id}/remove_music")
 async def remove_music_from_playlist(playlist_id: int, song_id: int, db: Session = Depends(get_db)):
     song_to_remove = db.query(models.Song).filter(models.Song.id == song_id).first()
@@ -94,7 +94,7 @@ async def remove_music_from_playlist(playlist_id: int, song_id: int, db: Session
     db.commit()
     return {"message": f"Song {song_to_remove.title} removed from playlist {playlist_id}"}
 
-
+#retrieves playlist HTTPException if playlist cannot be found
 @router.get("/{playlist_id}")
 async def get_playlist(playlist_id: int, db: Session = Depends(get_db)):
     playlist = db.query(models.Playlist).filter(models.Playlist.id == playlist_id).first()
@@ -102,7 +102,7 @@ async def get_playlist(playlist_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Playlist with id {playlist_id} not found")
     return playlist_to_dict(playlist)
 
-
+#retrieves the songs from a selected playlist
 @router.get("/{playlist_id}/songs")
 async def get_playlist_songs(playlist_id: int, db: Session = Depends(get_db)):
     playlist = db.query(models.Playlist).filter(models.Playlist.id == playlist_id).first()
@@ -118,7 +118,7 @@ async def get_playlist_songs(playlist_id: int, db: Session = Depends(get_db)):
         "songs": [song_to_dict(s) for s in songs],
     }
 
-
+#deletes a playlist from the database
 @router.delete("/{playlist_id}")
 async def delete_playlist(playlist_id: int, db: Session = Depends(get_db)):
     playlist = db.query(models.Playlist).filter(models.Playlist.id == playlist_id).first()

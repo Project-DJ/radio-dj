@@ -44,7 +44,7 @@
 
     "allowImportingTsExtensions": true,
 
-        "baseUrl": ".",
+       // "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },

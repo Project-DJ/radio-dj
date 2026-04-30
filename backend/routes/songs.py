@@ -45,13 +45,13 @@ def song_to_dict(s):
         "owner_id": s.owner_id,
     }
 
-
+#retrives songs from the database
 @router.get("/")
 async def get_songs(db: Session = Depends(get_db)):
     songs = db.query(models.Song).all()
     return [song_to_dict(s) for s in songs]
 
-
+#creates a song and adds it to the database
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_song(song: SongBase, db: Session = Depends(get_db)):
     new_song = models.Song(**song.model_dump(exclude_none=True))
@@ -60,7 +60,7 @@ async def create_song(song: SongBase, db: Session = Depends(get_db)):
     db.refresh(new_song)
     return {"message": "Song created successfully", "song_id": new_song.id}
 
-
+#searches for a song with inputs and adds it to the database HTTPException on error
 @router.post("/search_and_add", status_code=status.HTTP_201_CREATED)
 async def search_and_add(body: SongSearchInput, db: Session = Depends(get_db)):
     metadata = get_song_metadata(body.title, body.artist, body.album)
@@ -92,7 +92,7 @@ async def search_and_add(body: SongSearchInput, db: Session = Depends(get_db)):
     db.refresh(new_song)
     return {"song": song_to_dict(new_song), "spotify": metadata, "created": True}
 
-
+#finds the bpm of a selected song
 @router.post("/{song_id}/detect_bpm")
 async def detect_bpm(song_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
     song = db.query(models.Song).filter(models.Song.id == song_id).first()
@@ -113,7 +113,7 @@ async def detect_bpm(song_id: int, file: UploadFile = File(...), db: Session = D
     db.refresh(song)
     return {"song_id": song.id, "title": song.title, "bpm": song.bpm}
 
-
+#finds a song in the database using id number
 @router.get("/{song_id}")
 async def get_song(song_id: int, db: Session = Depends(get_db)):
     song = db.query(models.Song).filter(models.Song.id == song_id).first()
@@ -121,7 +121,7 @@ async def get_song(song_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Song with id {song_id} not found")
     return song_to_dict(song)
 
-
+#updates the fields of a song in the database
 @router.put("/{song_id}")
 async def update_song(song_id: int, song: SongBase, db: Session = Depends(get_db)):
     db_song = db.query(models.Song).filter(models.Song.id == song_id).first()
@@ -133,7 +133,7 @@ async def update_song(song_id: int, song: SongBase, db: Session = Depends(get_db
     db.refresh(db_song)
     return {"message": f"Song {song_id} updated successfully"}
 
-
+#removes a song from the database HTTPException on error
 @router.delete("/{song_id}")
 async def delete_song(song_id: int, db: Session = Depends(get_db)):
     song = db.query(models.Song).filter(models.Song.id == song_id).first()
@@ -143,7 +143,7 @@ async def delete_song(song_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": f"Song {song_id} deleted successfully"}
 
-
+#edits the metadata of a song in the database HTTPException upon failure to find selected song
 @router.post("/{song_id}/enrich_metadata")
 async def enrich_metadata(song_id: int, db: Session = Depends(get_db)):
     song = db.query(models.Song).filter(models.Song.id == song_id).first()
@@ -171,14 +171,14 @@ def get_access_token():
     r.raise_for_status()
     return r.json()["access_token"]
 
-
+#finds song artist through spotify api
 def get_artist(artist_id, token):
     r = requests.get(f"https://api.spotify.com/v1/artists/{artist_id}",
                      headers={"Authorization": f"Bearer {token}"}, timeout=15)
     r.raise_for_status()
     return r.json()
 
-
+#finds audio features through spotify api
 def get_audio_features(track_id, token):
     r = requests.get(f"https://api.spotify.com/v1/audio-features/{track_id}",
                      headers={"Authorization": f"Bearer {token}"}, timeout=15)
@@ -186,7 +186,7 @@ def get_audio_features(track_id, token):
         return r.json()
     return None
 
-
+#finds song metadata through spotify api
 def get_song_metadata(song_name, artist, album):
     token = get_access_token()
     query = f'track:"{song_name}" artist:"{artist}" album:"{album}"'

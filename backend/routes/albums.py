@@ -30,13 +30,13 @@ def song_to_dict(s):
         "owner_id": s.owner_id,
     }
 
-
+#retrieves all the albums from the database
 @router.get("/")
 async def get_albums(db: Session = Depends(get_db)):
     albums = db.query(models.Album).all()
     return [album_to_dict(a) for a in albums]
 
-
+#creates an album and adds it to the database
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_album(album: Album, db: Session = Depends(get_db)):
     new_album = models.Album(**album.model_dump(exclude_none=True))
@@ -45,7 +45,7 @@ async def create_album(album: Album, db: Session = Depends(get_db)):
     db.refresh(new_album)
     return {"message": "Album created successfully", "album_id": new_album.id}
 
-
+#retrieves only the songs from an album in the database
 @router.get("/{album_id}/songs")
 async def get_album_songs(album_id: int, db: Session = Depends(get_db)):
     album = db.query(models.Album).filter(models.Album.id == album_id).first()
@@ -54,7 +54,7 @@ async def get_album_songs(album_id: int, db: Session = Depends(get_db)):
     songs = db.query(models.Song).filter(models.Song.album == album.title).all()
     return [song_to_dict(s) for s in songs]
 
-
+#retrieves a single album from the database
 @router.get("/{album_id}")
 async def get_album(album_id: int, db: Session = Depends(get_db)):
     album = db.query(models.Album).filter(models.Album.id == album_id).first()
@@ -62,7 +62,7 @@ async def get_album(album_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Album with id {album_id} not found")
     return album_to_dict(album)
 
-
+#updates the contents of an album
 @router.put("/{album_id}")
 async def update_album(album_id: int, album: Album, db: Session = Depends(get_db)):
     db_album = db.query(models.Album).filter(models.Album.id == album_id).first()
@@ -74,7 +74,7 @@ async def update_album(album_id: int, album: Album, db: Session = Depends(get_db
     db.refresh(db_album)
     return {"message": f"Album {album_id} updated successfully"}
 
-
+#removes an album from the database
 @router.delete("/{album_id}")
 async def delete_album(album_id: int, db: Session = Depends(get_db)):
     album = db.query(models.Album).filter(models.Album.id == album_id).first()

@@ -12,6 +12,7 @@ const toggle = (arr: string[], val: string) =>
 const Index = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [albumNames, setAlbumNames] = useState<string[]>([])
   const [genres, setGenres] = useState<string[]>([]);
   const [artists, setArtists] = useState<string[]>([]);
   const [years, setYears] = useState<string[]>([]);
@@ -23,14 +24,16 @@ const Index = () => {
 
   const filtered = useMemo(() => {
     return albums.filter((a) => {
+      if (albumNames.length && !albumNames.includes(a.title ?? "")) return false;
       if (genres.length && !genres.includes(a.genre ?? "")) return false;
       if (artists.length && !artists.includes(a.artist)) return false;
       if (years.length && !years.includes(String(a.year ?? ""))) return false;
       return true;
     });
-  }, [albums, genres, artists, years]);
+  }, [albums, genres, artists, years, albumNames]);
 
   const clearAll = useCallback(() => {
+    setAlbumNames([]);
     setGenres([]);
     setArtists([]);
     setYears([]);
@@ -43,9 +46,12 @@ const Index = () => {
         genres={genres}
         artists={artists}
         years={years}
+        albumNames={albumNames}
+        onToggleAlbum={(v) => setAlbumNames((p) => toggle(p, v))}  
         onToggleGenre={(v) => setGenres((p) => toggle(p, v))}
         onToggleArtist={(v) => setArtists((p) => toggle(p, v))}
         onToggleYear={(v) => setYears((p) => toggle(p, v))}
+        
         onClearAll={clearAll}
         totalFiltered={filtered.length}
       />

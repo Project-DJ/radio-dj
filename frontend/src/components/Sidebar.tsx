@@ -6,6 +6,8 @@ interface Props {
   genres: string[];
   artists: string[];
   years: string[];
+  albumNames: string[];                  
+  onToggleAlbum: (v: string) => void;
   onToggleGenre: (v: string) => void;
   onToggleArtist: (v: string) => void;
   onToggleYear: (v: string) => void;
@@ -15,12 +17,13 @@ interface Props {
 
 export function MusicLibrarySidebar({
   allAlbums,
-  genres, artists, years,
-  onToggleGenre, onToggleArtist, onToggleYear,
+  genres, artists, years, albumNames,
+  onToggleAlbum, onToggleGenre, onToggleArtist, onToggleYear,
   onClearAll, totalFiltered,
 }: Props) {
   const hasFilters = genres.length + artists.length + years.length > 0;
 
+  const uniqueAlbums = [...new Set(allAlbums.map((a) => a.title))].sort();
   const uniqueGenres = [...new Set(allAlbums.map((a) => a.genre).filter(Boolean) as string[])].sort();
   const uniqueArtists = [...new Set(allAlbums.map((a) => a.artist))].sort();
   const uniqueYears = [...new Set(allAlbums.map((a) => String(a.year)).filter((y) => y !== "null" && y !== "undefined"))].sort();
@@ -34,7 +37,14 @@ export function MusicLibrarySidebar({
         <p className="text-[11px] text-muted-foreground font-body mt-1">
           {totalFiltered} album{totalFiltered !== 1 && "s"} found
         </p>
-      </div>
+      </div>s
+
+      <FilterDropdown
+        label="Album"
+        options={uniqueAlbums}
+        selected={albumNames}
+        onToggle={onToggleAlbum}
+      />
 
       <FilterDropdown
         label="Genre"
